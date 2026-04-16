@@ -8,8 +8,11 @@ import matplotlib.pyplot as plt
 
 def to_gray_manual(img):
     altura, largura, _ = img.shape
+
+    # Cria matriz vazia para armazenar a imagem em tons de cinza
     gray = np.zeros((altura, largura), dtype=np.uint8)
 
+    # Percorre pixel a pixel
     for y in range(altura):
         for x in range(largura):
 
@@ -17,8 +20,10 @@ def to_gray_manual(img):
             g = img[y, x, 1]
             r = img[y, x, 2]
 
+            # Conversão usando fórmula da luminância
             valor = int(0.299*r + 0.587*g + 0.114*b)
 
+            # Garante limite máximo
             if valor > 255:
                 valor = 255
 
@@ -34,6 +39,7 @@ def to_gray_manual(img):
 def weighted_sum(imgA, imgB, wA, wB):
     altura, largura = imgA.shape
 
+    # Matriz de saída
     result = np.zeros((altura, largura), dtype=np.uint8)
 
     print(f"Combinando imagens com pesos {wA} e {wB}...")
@@ -41,11 +47,14 @@ def weighted_sum(imgA, imgB, wA, wB):
     for y in range(altura):
         for x in range(largura):
 
+            # Converte para float para evitar erro na multiplicação
             A = float(imgA[y, x])
             B = float(imgB[y, x])
 
+            # Combinação linear ponderada
             valor = (wA * A) + (wB * B)
 
+            # Clipping para manter dentro de [0,255]
             if valor > 255:
                 valor = 255
             if valor < 0:
@@ -57,20 +66,45 @@ def weighted_sum(imgA, imgB, wA, wB):
 
 
 # -------------------------
+# 3. Redimensionamento proporcional
+# -------------------------
+
+def resize_proporcional(img, tamanho_max=512):
+    altura, largura, _ = img.shape
+
+    # Mantém proporção original
+    if altura > largura:
+        nova_altura = tamanho_max
+        nova_largura = int(largura * (tamanho_max / altura))
+    else:
+        nova_largura = tamanho_max
+        nova_altura = int(altura * (tamanho_max / largura))
+
+    return cv2.resize(img, (nova_largura, nova_altura))
+
+
+# -------------------------
 # Carregar imagens
 # -------------------------
 
-img_lua = cv2.imread('fotos/macaco.png')
-img_titan = cv2.imread('fotos/medelin.jpg')
+img_um = cv2.imread('fotos/gato.jpg')
+img_dois = cv2.imread('fotos/monte_fuji.jpg')
 
 print("Imagens carregadas!")
+
+# Redimensionamento para melhorar desempenho
+img_um = resize_proporcional(img_um)
+img_dois = resize_proporcional(img_dois)
+print("Imagens redimensionadas!")
+
 
 # -------------------------
 # Pipeline
 # -------------------------
 
-gray_A = to_gray_manual(img_lua)
-gray_B = to_gray_manual(img_titan)
+# Conversão para tons de cinza (manual)
+gray_A = to_gray_manual(img_um)
+gray_B = to_gray_manual(img_dois)
 
 # garantir mesmo tamanho
 altura, largura = gray_A.shape

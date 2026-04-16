@@ -34,9 +34,11 @@ def to_gray_manual(img):
 def crop_to_multiple_of_4(img):
     altura, largura = img.shape
 
+    # Ajusta dimensões para múltiplos de 4
     nova_altura = (altura // 4) * 4
     nova_largura = (largura // 4) * 4
 
+    # Recorta a imagem
     return img[0:nova_altura, 0:nova_largura]
 
 
@@ -47,60 +49,85 @@ def crop_to_multiple_of_4(img):
 def build_mosaic(img, ordem):
     altura, largura = img.shape
 
+    # Define tamanho de cada bloco
     altura_bloco = altura // 4
     largura_bloco = largura // 4
 
+    # Imagem de saída
     result = np.zeros((altura, largura), dtype=np.uint8)
 
     print("Montando mosaico 4x4...")
 
+    # Percorre cada posição do mosaico
     for lin_dest in range(4):
         for col_dest in range(4):
 
-            # número do bloco de origem
+            # Número do bloco na matriz de ordem
             num = ordem[lin_dest, col_dest]
 
-            # converter para coordenadas (linha, coluna)
+            # Converte número do bloco em posição (linha, coluna)
             lin_ori = (num - 1) // 4
             col_ori = (num - 1) % 4
 
-            # coordenadas origem
+            # Coordenadas do bloco original
             y1o = lin_ori * altura_bloco
             y2o = y1o + altura_bloco
-
             x1o = col_ori * largura_bloco
             x2o = x1o + largura_bloco
 
-            # coordenadas destino
+            # Coordenadas de destino
             y1d = lin_dest * altura_bloco
             y2d = y1d + altura_bloco
-
             x1d = col_dest * largura_bloco
             x2d = x1d + largura_bloco
 
-            # copiar bloco
+            # Copia o bloco da origem para o destino
             result[y1d:y2d, x1d:x2d] = img[y1o:y2o, x1o:x2o]
 
     return result
 
 
 # -------------------------
+# 4. Redimensionamento proporcional
+# -------------------------
+
+def resize_proporcional(img, tamanho_max=512):
+    altura, largura, _ = img.shape
+
+    # Mantém proporção original
+    if altura > largura:
+        nova_altura = tamanho_max
+        nova_largura = int(largura * (tamanho_max / altura))
+    else:
+        nova_largura = tamanho_max
+        nova_altura = int(altura * (tamanho_max / largura))
+
+    return cv2.resize(img, (nova_largura, nova_altura))
+
+
+# -------------------------
 # Carregar imagem
 # -------------------------
 
-img = cv2.imread('fotos/macaco.png')
-
+img = cv2.imread('fotos/cachorro.jpg')
 print("Imagem carregada!")
+
+# Redimensionamento para melhorar desempenho
+img = resize_proporcional(img)
+print("Imagem redimensionada!")
+
 
 # -------------------------
 # Pipeline
 # -------------------------
 
+# Conversão para cinza
 img_gray = to_gray_manual(img)
 
+# Ajuste para múltiplos de 4
 img_crop = crop_to_multiple_of_4(img_gray)
 
-# ordem da questão (c)
+# Ordem dos blocos (definida no exercício)
 ordem_blocos = np.array([
     [6, 11, 13, 3],
     [8, 16, 1, 9],
@@ -108,6 +135,7 @@ ordem_blocos = np.array([
     [4, 15, 10, 5]
 ])
 
+# Construção do mosaico
 img_mosaico = build_mosaic(img_crop, ordem_blocos)
 
 # -------------------------

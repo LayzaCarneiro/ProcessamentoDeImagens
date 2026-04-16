@@ -39,6 +39,8 @@ def negative(img):
         for x in range(largura):
 
             r = img[y, x]
+
+            # Inversão de intensidade
             s = 255 - r
 
             result[y, x] = s
@@ -49,35 +51,11 @@ def negative(img):
 # -------------------------
 # 3. Ajuste para intervalo [100,200]
 # -------------------------
-
 def adjust_interval(img):
     altura, largura = img.shape
     result = np.zeros((altura, largura), dtype=np.uint8)
 
-    for y in range(altura):
-        for x in range(largura):
-
-            r = img[y, x]
-
-            # transformação linear
-            s = (r / 255.0) * 100.0 + 100.0
-
-            if s > 200: s = 200
-            if s < 100: s = 100
-
-            result[y, x] = int(s)
-
-    return result
-
-
-def contraste_agressivo(img):
-    altura, largura = img.shape
-    result = np.zeros((altura, largura), dtype=np.uint8)
-
-    # 1. Definir os limiares de 'escuro' e 'claro' que queremos transformar.
-    # Estes valores (70 e 200) são estimativas baseadas na imagem (a).
-    # Tudo abaixo de r_min virará preto (0).
-    # Tudo acima de r_max virará branco (255).
+    # Limiares definidos empiricamente
     r_min = 100.0
     r_max = 200.0
 
@@ -89,18 +67,15 @@ def contraste_agressivo(img):
         for x in range(largura):
             r = img[y, x]
 
-            # 2. Aplicar a transformação linear de expansão na faixa intermediária.
-            # A fórmula expande a faixa [r_min, r_max] para o intervalo [0, 255].
+            # Expansão de contraste na faixa intermediária
             s = ( (r - r_min) / (r_max - r_min) ) * 255.0
 
-            # 3. Importante: Limitar os resultados (clipping) para garantir que
-            # fiquem dentro do intervalo de imagem [0, 255].
+            # Clipping
             if s > 255:
                 s = 255
             if s < 0:
                 s = 0
 
-            # 4. Converter para inteiro e salvar
             result[y, x] = int(s)
 
     return result
@@ -118,6 +93,7 @@ def invert_even_rows(img):
     for y in range(altura):
         for x in range(largura):
 
+            # Se a linha for par → espelha horizontalmente
             if y % 2 == 0:
                 x_inv = (largura - 1) - x
                 result[y, x_inv] = img[y, x]
@@ -140,9 +116,11 @@ def mirror_top_down(img):
     for y in range(altura):
         for x in range(largura):
 
+            # Metade superior permanece igual
             if y < metade:
                 result[y, x] = img[y, x]
             else:
+                # Metade inferior espelha a superior
                 y_origem = (altura - 1) - y
                 result[y, x] = img[y_origem, x]
 
@@ -160,30 +138,52 @@ def flip_vertical(img):
     for y in range(altura):
         for x in range(largura):
 
+            # Inversão completa no eixo vertical
             y_inv = (altura - 1) - y
             result[y_inv, x] = img[y, x]
 
     return result
 
+# -------------------------
+# 7. Redimensionamento proporcional
+# -------------------------
+
+def resize_proporcional(img, tamanho_max=512):
+    altura, largura, _ = img.shape
+
+    # Mantém proporção original
+    if altura > largura:
+        nova_altura = tamanho_max
+        nova_largura = int(largura * (tamanho_max / altura))
+    else:
+        nova_largura = tamanho_max
+        nova_altura = int(altura * (tamanho_max / largura))
+
+    return cv2.resize(img, (nova_largura, nova_altura))
+
 
 # -------------------------
-# Carregar imagem
+# Carregar imagens
 # -------------------------
 
-img = cv2.imread('fotos/rua.png')
-
+img = cv2.imread('fotos/raposa_artico.jpg')
 print("Imagem carregada!")
+
+# Redimensionamento para melhorar desempenho
+img = resize_proporcional(img)
+print("Imagem redimensionada!")
+
 
 # -------------------------
 # Pipeline
 # -------------------------
 
-img_a = to_gray_manual(img)
-img_b = negative(img_a)
-img_c = contraste_agressivo(img_a)
-img_d = invert_even_rows(img_a)
-img_e = mirror_top_down(img_a)
-img_f = flip_vertical(img_a)
+img_a = to_gray_manual(img)          # cinza
+img_b = negative(img_a)              # negativo
+img_c = adjust_interval(img_a)       # ajuste de intensidade
+img_d = invert_even_rows(img_a)      # linhas pares invertidas
+img_e = mirror_top_down(img_a)       # espelho superior/inferior
+img_f = flip_vertical(img_a)         # flip total
 
 # -------------------------
 # Exibição

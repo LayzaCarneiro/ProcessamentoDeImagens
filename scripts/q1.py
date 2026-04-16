@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import math
 import matplotlib.pyplot as plt
+import os
 
 # -------------------------
 # 1. Conversão manual para cinza
@@ -127,9 +128,30 @@ def pencil_effect(gray, blurred):
 # Carregar imagem
 # -------------------------
 
-img = cv2.imread('fotos/peixe_colorido.jpeg')
-
+img = cv2.imread("fotos/onca_natureza.jpg")
+cv2.imwrite("fotos/animal.png", img)
 print("Imagem carregada!")
+
+# -------------------------
+# Redimensiona para tamanho padrão
+# -------------------------
+def resize_proporcional(img, tamanho_max=512):
+    altura, largura, _ = img.shape
+
+    if altura > largura:
+        nova_altura = tamanho_max
+        nova_largura = int(largura * (tamanho_max / altura))
+    else:
+        nova_largura = tamanho_max
+        nova_altura = int(altura * (tamanho_max / largura))
+
+    img_redimensionada = cv2.resize(img, (nova_largura, nova_altura))
+
+    return img_redimensionada
+
+img = resize_proporcional(img)
+print("Imagem redimensionada para tamanho padrão!")
+
 
 # -------------------------
 # Pipeline
@@ -143,9 +165,20 @@ blurred = convolution(gray, kernel)
 
 sketch = pencil_effect(gray, blurred)
 
+# -------------------------
+# Salvar automaticamente
+# -------------------------
+
+os.makedirs("resultados", exist_ok=True)
+
+caminho = "resultados/questao_um.png"
+cv2.imwrite(caminho, sketch)
+
+print(f"Imagem salva em: {caminho}")
+
 
 # -------------------------
-# Mostrar imagens (igual modelo que você queria)
+# Mostrar imagens
 # -------------------------
 
 plt.figure(figsize=(12,4))

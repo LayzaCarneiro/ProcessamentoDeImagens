@@ -1,35 +1,42 @@
-import cv2
-import numpy as np
-import math
-import matplotlib.pyplot as plt
-import os
+import cv2  # leitura e escrita de imagens
+import numpy as np  # manipulação de matrizes
+import math  # funções matemáticas
+import matplotlib.pyplot as plt  # exibição de imagens
+import os  # manipulação de diretórios
 
 # -------------------------
-# 1. Conversão manual para cinza
+# 1. Conversão para cinza (manual)
 # -------------------------
 
 def to_gray_manual(img):
+    # Obtém dimensões da imagem
     altura, largura, _ = img.shape
+
+    # Cria matriz vazia para imagem em tons de cinza
     gray = np.zeros((altura, largura), dtype=np.uint8)
 
+    # Percorre pixel a pixel
     for y in range(altura):
         for x in range(largura):
+
             b = img[y, x, 0]
             g = img[y, x, 1]
             r = img[y, x, 2]
 
-            valor = int(0.299*r + 0.587*g + 0.114*b)
+            # Fórmula da luminância
+            value = int(0.299*r + 0.587*g + 0.114*b)
 
-            if valor > 255:
-                valor = 255
+            # Garantia de limite
+            if value > 255:
+                value = 255
 
-            gray[y, x] = valor
+            gray[y, x] = value
 
     return gray
 
 
 # -------------------------
-# 2. Kernel gaussiano manual
+# 2. Kernel gaussiano (manual)
 # -------------------------
 
 def gaussian_kernel(size, sigma):
@@ -37,6 +44,7 @@ def gaussian_kernel(size, sigma):
     kernel = np.zeros((size, size), dtype=np.float32)
     soma = 0.0
 
+    # Construção do kernel usando fórmula Gaussiana
     for y in range(-offset, offset + 1):
         for x in range(-offset, offset + 1):
 
@@ -47,7 +55,7 @@ def gaussian_kernel(size, sigma):
             kernel[y + offset, x + offset] = valor
             soma += valor
 
-    # normalização
+    # Normalização (soma dos pesos = 1)
     for i in range(size):
         for j in range(size):
             kernel[i, j] /= soma
@@ -56,7 +64,7 @@ def gaussian_kernel(size, sigma):
 
 
 # -------------------------
-# 3. Convolução manual COM padding
+# 3. Convolução manual com padding
 # -------------------------
 
 def convolution(img, kernel):
@@ -64,17 +72,20 @@ def convolution(img, kernel):
     ksize = kernel.shape[0]
     offset = ksize // 2
 
-    # padding manual (borda preta)
+    # Criação do padding (bordas pretas)
     padded = np.zeros((altura + 2*offset, largura + 2*offset), dtype=np.uint8)
 
+    # Copia imagem original para o centro do padding
     for y in range(altura):
         for x in range(largura):
             padded[y + offset, x + offset] = img[y, x]
 
     output = np.zeros((altura, largura), dtype=np.float32)
 
+    # Convolução
     for y in range(altura):
 
+        # Apenas para acompanhar progresso
         if y % 10 == 0:
             print(f"Processando linha {y}/{altura}...")
 
@@ -82,6 +93,7 @@ def convolution(img, kernel):
 
             soma_pixel = 0.0
 
+            # Aplica o kernel
             for ky in range(ksize):
                 for kx in range(ksize):
 
@@ -103,12 +115,14 @@ def pencil_effect(gray, blurred):
     altura, largura = gray.shape
     result = np.zeros((altura, largura), dtype=np.uint8)
 
+    # Percorre pixel a pixel
     for y in range(altura):
         for x in range(largura):
 
-            g = int(gray[y, x])
-            b = int(blurred[y, x])
+            g = int(gray[y, x])     # imagem original
+            b = int(blurred[y, x])  # imagem borrada
 
+            # Evita divisão por zero
             if b == 0:
                 novo = 255
             else:
@@ -125,19 +139,13 @@ def pencil_effect(gray, blurred):
 
 
 # -------------------------
-# Carregar imagem
+# 5. Redimensionamento proporcional
 # -------------------------
 
-img = cv2.imread("fotos/onca_natureza.jpg")
-cv2.imwrite("fotos/animal.png", img)
-print("Imagem carregada!")
-
-# -------------------------
-# Redimensiona para tamanho padrão
-# -------------------------
 def resize_proporcional(img, tamanho_max=512):
     altura, largura, _ = img.shape
 
+    # Mantém proporção original
     if altura > largura:
         nova_altura = tamanho_max
         nova_largura = int(largura * (tamanho_max / altura))
@@ -145,16 +153,25 @@ def resize_proporcional(img, tamanho_max=512):
         nova_largura = tamanho_max
         nova_altura = int(altura * (tamanho_max / largura))
 
-    img_redimensionada = cv2.resize(img, (nova_largura, nova_altura))
-
-    return img_redimensionada
-
-img = resize_proporcional(img)
-print("Imagem redimensionada para tamanho padrão!")
+    return cv2.resize(img, (nova_largura, nova_altura))
 
 
 # -------------------------
-# Pipeline
+# Carregar imagem
+# -------------------------
+
+img = cv2.imread("fotos/onca_natureza.jpg")
+cv2.imwrite("fotos/animal.png", img)
+
+print("Imagem carregada!")
+
+# Redimensionamento
+img = resize_proporcional(img)
+print("Imagem redimensionada!")
+
+
+# -------------------------
+# Pipeline de processamento
 # -------------------------
 
 gray = to_gray_manual(img)
@@ -165,8 +182,9 @@ blurred = convolution(gray, kernel)
 
 sketch = pencil_effect(gray, blurred)
 
+
 # -------------------------
-# Salvar automaticamente
+# Salvar resultado
 # -------------------------
 
 os.makedirs("resultados", exist_ok=True)
@@ -178,7 +196,7 @@ print(f"Imagem salva em: {caminho}")
 
 
 # -------------------------
-# Mostrar imagens
+# Exibição
 # -------------------------
 
 plt.figure(figsize=(12,4))
@@ -190,12 +208,12 @@ plt.axis("off")
 
 plt.subplot(1,4,2)
 plt.imshow(gray, cmap="gray")
-plt.title("Cinza (manual)")
+plt.title("Cinza")
 plt.axis("off")
 
 plt.subplot(1,4,3)
 plt.imshow(blurred, cmap="gray")
-plt.title("Gaussiano (manual)")
+plt.title("Gaussiano")
 plt.axis("off")
 
 plt.subplot(1,4,4)

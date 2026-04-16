@@ -1,6 +1,6 @@
-import cv2
-import numpy as np
-import matplotlib.pyplot as plt
+import cv2 # leitura e escrita de imagens
+import numpy as np  # manipulação de matrizes
+import matplotlib.pyplot as plt  # exibição de imagens
 
 # -------------------------
 # 1. Conversão para cinza + normalização [0,1]
@@ -9,12 +9,13 @@ import matplotlib.pyplot as plt
 def to_gray_and_normalize(img):
     altura, largura, _ = img.shape
 
-    # matriz float para [0,1]
+    # Cria uma matriz float (double) para armazenar valores entre 0 e 1
     norm = np.zeros((altura, largura), dtype=np.float64)
 
     print(f"Processando imagem de {largura}x{altura}...")
     print("Convertendo para cinza e normalizando...")
 
+    # Percorre pixel a pixel
     for y in range(altura):
         for x in range(largura):
 
@@ -22,13 +23,14 @@ def to_gray_and_normalize(img):
             g = img[y, x, 1]
             r = img[y, x, 2]
 
-            # cinza manual
+            # Conversão manual para escala de cinza (luminância)
             pixel_cinza = int(0.299*r + 0.587*g + 0.114*b)
 
+            # Garantia de limite máximo
             if pixel_cinza > 255:
                 pixel_cinza = 255
 
-            # normalização
+            # Normalização: traz o valor para o intervalo [0,1]
             norm[y, x] = pixel_cinza / 255.0
 
     return norm
@@ -41,7 +43,7 @@ def to_gray_and_normalize(img):
 def apply_gamma(norm_img, gamma):
     altura, largura = norm_img.shape
 
-    # saída já em [0,255]
+    # Imagem de saída já no formato padrão [0,255]
     output = np.zeros((altura, largura), dtype=np.uint8)
 
     print(f"Aplicando gamma = {gamma}...")
@@ -49,17 +51,19 @@ def apply_gamma(norm_img, gamma):
     for y in range(altura):
         for x in range(largura):
 
+            # Pixel normalizado
             A = norm_img[y, x]
 
-            # equação principal
+            # Aplicação da transformação gama:
+            # B = A^(1/gamma)
             B = A ** (1.0 / gamma)
 
-            # voltando para [0,255]
+            # Retorno para escala [0,255]
             novo_pixel = int(B * 255)
 
+            # Clipping de segurança
             if novo_pixel > 255:
                 novo_pixel = 255
-
             if novo_pixel < 0:
                 novo_pixel = 0
 
@@ -69,35 +73,56 @@ def apply_gamma(norm_img, gamma):
 
 
 # -------------------------
+# 3. Redimensionamento proporcional
+# -------------------------
+
+def resize_proporcional(img, tamanho_max=512):
+    altura, largura, _ = img.shape
+
+    # Mantém proporção original
+    if altura > largura:
+        nova_altura = tamanho_max
+        nova_largura = int(largura * (tamanho_max / altura))
+    else:
+        nova_largura = tamanho_max
+        nova_altura = int(altura * (tamanho_max / largura))
+
+    return cv2.resize(img, (nova_largura, nova_altura))
+
+
+# -------------------------
 # Carregar imagem
 # -------------------------
 
-img = cv2.imread('fotos/macaco.png')
-
+img = cv2.imread('fotos/vaca.jpg')
 print("Imagem carregada!")
+
+# Redimensionamento para melhorar desempenho
+img = resize_proporcional(img)
+print("Imagem redimensionada!")
 
 # -------------------------
 # Pipeline
 # -------------------------
 
-norm = to_gray_and_normalize(img)
-
+# Valores de gamma a serem testados
 valores_gamma = [0.5, 1.5, 2.5, 3.5]
 
 imagens = []
 titulos = []
 
-# original
-gray_original = (norm * 255).astype(np.uint8)
-
-imagens.append(gray_original)
+# Imagem original colorida
+imagens.append(img)
 titulos.append("Original")
 
-# normalizada
+# Conversão + normalização
+norm = to_gray_and_normalize(img)
+
+# Imagem normalizada
 imagens.append(norm)
 titulos.append("Normalizada [0,1]")
 
-# aplicar gamas
+# Aplicação da correção gama para diferentes valores
 for g in valores_gamma:
     resultado = apply_gamma(norm, g)
 
@@ -115,10 +140,17 @@ for i in range(len(imagens)):
 
     plt.subplot(2, 3, i+1)
 
-    # imagem normalizada
-    if imagens[i].dtype == np.float64:
+    # Caso especial para imagem normalizada
+    if len(imagens[i].shape) == 3:
+        # imagem colorida (BGR → RGB)
+        plt.imshow(cv2.cvtColor(imagens[i], cv2.COLOR_BGR2RGB))
+
+    elif imagens[i].dtype == np.float64:
+        # imagem normalizada
         plt.imshow(imagens[i], cmap='gray', vmin=0.0, vmax=1.0)
+
     else:
+        # imagem em cinza [0,255]
         plt.imshow(imagens[i], cmap='gray', vmin=0, vmax=255)
 
     plt.title(titulos[i])

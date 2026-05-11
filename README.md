@@ -1,63 +1,54 @@
 # Processamento de Imagens (PI)
 
-Este projeto contém a implementação de diversas técnicas de **Processamento de Imagens**, desenvolvidas manualmente utilizando Python, com foco em manipulação direta dos pixels.
+Este projeto reúne duas atividades de **Processamento de Imagens** desenvolvidas em Python, com implementação direta sobre pixels e sem uso de funções de alto nível do OpenCV.
 
 ---
 
-# Resumo da Atividade
+# Visão Geral
 
-O trabalho consiste na implementação de operações fundamentais de PDI, como:
+O repositório contém duas atividades principais:
 
-* Conversão para escala de cinza
-* Aplicação de filtros (ex: Gaussiano)
-* Correção gama
-* Quantização de níveis de cinza
-* Transformações geométricas
-* Combinação de imagens
-* Construção de mosaicos
+* `atividade_um/` — operações básicas de PDI e transformações geométricas.
+* `atividade_dois/` — análise de frequência, filtros e tratamento de sinais em imagens.
 
-As implementações foram feitas **sem uso de funções prontas do OpenCV**, priorizando o entendimento dos algoritmos na base matemática.
-
-Além disso, foram realizadas análises visuais para compreender o impacto de cada transformação nas imagens.
+Cada atividade inclui imagens de entrada, resultados gerados e scripts das questões.
 
 ---
 
-# Requisitos
+# Atividade 1: Processamento Direto de Imagens
 
-* Python 3.x
-* pip
+Nesta primeira etapa foram exploradas técnicas de manipulação clássicas, aplicadas diretamente em arrays de pixels:
 
----
+* conversão para escala de cinza
+* correção gama e ajuste de brilho/contraste
+* quantização de níveis de cinza
+* filtros de suavização e realce
+* combinações de imagens e mosaicos
+* transformações geométricas simples
 
-# Instalação
+Resultados:
 
-## 1. Criar ambiente virtual
-
-```bash
-python3 -m venv venv
-```
-
-## 2. Ativar o ambiente
-
-### Linux / Mac:
-
-```bash
-source venv/bin/activate
-```
-
-### Windows:
-
-```bash
-venv\Scripts\activate
-```
+* imagens originais comparadas com versões processadas
+* redução de ruído e melhoria de contraste
+* efeitos visuais de quantização e filtragem
+* geração de mosaicos e composições a partir de múltiplas entradas
 
 ---
 
-## 3. Instalar dependências
+# Atividade 2: Filtros e Transformada de Fourier
 
-```bash
-pip3 install opencv-python numpy matplotlib
-```
+A segunda atividade foi focada em análise de frequência e filtragem:
+
+* cálculo manual da FFT de imagens
+* visualização de espectros de magnitude
+* aplicação de filtros em domínio espacial e de frequência
+* comparação entre imagem original e filtrada
+
+Resultados:
+
+* identificação de componentes de frequência nas imagens
+* remoção de ruído e suavização seletiva
+* efeitos de filtragem implementados a partir da matemática da transformada
 
 ---
 
@@ -65,9 +56,16 @@ pip3 install opencv-python numpy matplotlib
 
 ```text
 .
-├── fotos/           # Imagens de entrada
-├── resultados/      # Imagens geradas pelo processamento
-├── scripts/         # Códigos das questões
+├── atividade_um/
+│   ├── fotos/           # Imagens de entrada da atividade 1
+│   ├── resultados/      # Resultados gerados pela atividade 1
+│   ├── scripts/         # Códigos das questões da atividade 1
+│   └── relatorio_atividade_um_pi.pdf
+├── atividade_dois/
+│   ├── fotos/           # Imagens de entrada da atividade 2
+│   ├── resultados/      # Resultados gerados pela atividade 2
+│   ├── scripts/         # Códigos das questões da atividade 2
+│   └── relatorio_atividade_dois_pi.pdf
 ├── README.md
 ```
 
@@ -75,48 +73,50 @@ pip3 install opencv-python numpy matplotlib
 
 # Como Executar
 
-1. Coloque as imagens na pasta `fotos/`
-2. Execute o script desejado:
+1. Ative o ambiente virtual:
 
 ```bash
-python3 nome_do_arquivo.py
+source venv/bin/activate
 ```
 
-3. Os resultados serão:
+2. Instale dependências:
 
-* ✔ exibidos na tela (preview)
-* ✔ salvos automaticamente na pasta `resultados/`
+```bash
+pip3 install opencv-python numpy matplotlib
+```
 
----
+3. Navegue até a atividade desejada e execute o script correspondente:
 
-# Observações Importantes
+```bash
+cd atividade_um && python3 scripts/q1.py
+```
 
-* As imagens são redimensionadas (quando necessário) para evitar alto custo computacional.
-* Sempre que possível, utiliza-se o formato **PNG** para evitar perda de qualidade.
-* Todas as operações foram implementadas **manualmente**, percorrendo pixel a pixel.
+ou
 
----
+```bash
+cd atividade_dois && python3 scripts/q1.py
+```
 
-# Sobre os Resultados
+4. Os resultados são:
 
-Cada técnica aplicada gera efeitos distintos, como:
-
-* **Correção gama:** ajuste de brilho e contraste
-* **Quantização:** redução de níveis de cinza e perda de detalhes
-* **Filtros:** suavização ou realce de regiões
-* **Transformações:** alteração da geometria da imagem
-
-As análises foram feitas com base em comparações visuais entre as imagens originais e processadas.
+* exibidos na tela
+* salvos em `resultados/`
 
 ---
 
-# Preview dos Resultados
+# Observações
 
-| Questão | Original | Processada |
-|--------|----------|------------|
-| 1 | <img src="https://github.com/user-attachments/assets/324fd750-a7e1-427e-87c0-61d524513cb1" width="200"/> | <img src="https://github.com/user-attachments/assets/51eaf8b2-b313-4a60-816e-e0204fdf26ef" width="300"/> |
-| 2 | <img src="https://github.com/user-attachments/assets/49ea8dac-75c5-4a84-bd21-73ce980143d5" width="200"/> | <img src="https://github.com/user-attachments/assets/64acc593-cfcf-4a3e-b847-cf5fd0b3b31d" width="300"/> |
-| 3 | <img src="https://github.com/user-attachments/assets/3d26de04-db64-4739-8c7d-bab909f38941" width="150"/> <img src="https://github.com/user-attachments/assets/8a1df2e9-26ba-449a-b0ba-5b2a158605e0" width="150"/> | <img src="https://github.com/user-attachments/assets/11ab3758-ea2e-4458-b88d-1e48d3254c69" width="300"/> |
-| 4 | <img src="https://github.com/user-attachments/assets/98626a56-6470-44e6-b1e7-2974d76e067d" width="200"/> | <img src="https://github.com/user-attachments/assets/a6a0c186-ffdf-4ab2-a01d-887371248b01" width="300"/> |
-| 5 | <img src="https://github.com/user-attachments/assets/39eb74d6-d603-496c-8b2d-66b647540d64" width="200"/> | <img src="https://github.com/user-attachments/assets/1512a384-6e72-4f0e-858d-19f9ee25da31" width="300"/> |
-| 6 | <img src="https://github.com/user-attachments/assets/38b032a6-41d9-4fb6-8c11-96c2319fc171" width="200"/> | <img src="https://github.com/user-attachments/assets/b748541c-b945-4f74-9211-29cfbf853815" width="300"/> |
+* As implementações evitam funções prontas do OpenCV sempre que possível.
+* O processamento é feito pixel a pixel ou com conceitos matemáticos explícitos.
+* O uso de PNG é preferido para reduzir perdas por compressão.
+
+---
+
+# Resultado Final
+
+O projeto demonstra duas frentes do processamento de imagens:
+
+* **atividade 1:** transformações diretas e manipulação clássica de pixels.
+* **atividade 2:** análise de frequência e filtragem sofisticada.
+
+Cada atividade entrega resultados visuais e arquivos de saída que ilustram o efeito de cada técnica aplicada.

@@ -109,7 +109,7 @@ def resize_proporcional(img, tamanho_max=512):
 # Carregar imagem
 # -------------------------
 
-img = cv2.imread('fotos/cachorro.jpg')
+img = cv2.imread('atividade_um/fotos/cachorro.jpg')
 print("Imagem carregada!")
 
 # Redimensionamento para melhorar desempenho

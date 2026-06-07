@@ -199,51 +199,45 @@ cv2.imwrite("resultados/q2/imagem2_gray.png", gray2)
 # -------------------------
 # 13. Gráfico comparativo
 # -------------------------
-nomes = [
-    "Média",
-    "Variância",
-    "Energia",
-    "Dif. Horizontal",
-    "Dif. Vertical"
-]
+descritores = {
+    "Média": (descritores1["Média"], descritores2["Média"]),
+    "Variância": (descritores1["Variância"], descritores2["Variância"]),
+    "Energia": (descritores1["Energia"], descritores2["Energia"]),
+    "Dif. Horizontal": (descritores1["Diff_Horizontal"], descritores2["Diff_Horizontal"]),
+    "Dif. Vertical": (descritores1["Diff_Vertical"], descritores2["Diff_Vertical"])
+}
 
-valores1 = [
-    descritores1["Média"],
-    descritores1["Variância"],
-    descritores1["Energia"],
-    descritores1["Diff_Horizontal"],
-    descritores1["Diff_Vertical"]
-]
+fig, axs = plt.subplots(2, 3, figsize=(15, 8))
+axs = axs.flatten()
 
-valores2 = [
-    descritores2["Média"],
-    descritores2["Variância"],
-    descritores2["Energia"],
-    descritores2["Diff_Horizontal"],
-    descritores2["Diff_Vertical"]
-]
+for i, (nome, valores) in enumerate(descritores.items()):
+    barras = axs[i].bar(["Imagem 1", "Imagem 2"], valores)
 
-x = np.arange(len(nomes))
-largura_barra = 0.35
+    axs[i].set_title(nome)
+    axs[i].set_ylabel("Valor")
+    axs[i].grid(axis="y", alpha=0.3)
 
-plt.figure(figsize=(12, 6))
+    # margem superior para os textos
+    axs[i].set_ylim(0, max(valores) * 1.15)
 
-plt.bar(x - largura_barra/2, valores1, largura_barra, label="Imagem 1")
-plt.bar(x + largura_barra/2, valores2, largura_barra, label="Imagem 2")
+    # valor acima das barras
+    for barra in barras:
+        altura = barra.get_height()
+        axs[i].text(
+            barra.get_x() + barra.get_width() / 2,
+            altura,
+            f"{altura:.4f}",
+            ha="center",
+            va="bottom",
+            fontsize=8
+        )
 
-plt.xticks(x, nomes)
+# remove o sexto subplot vazio
+fig.delaxes(axs[5])
 
-plt.title("Comparação de Descritores")
-plt.legend()
-
+plt.suptitle("Comparação dos Descritores",  fontsize=16)
 plt.tight_layout()
-
-plt.savefig(
-    "resultados/q2/comparacao_descritores.png",
-    dpi=300,
-    bbox_inches="tight"
-)
-
+plt.savefig("resultados/q2/comparacao_descritores.png", dpi=300, bbox_inches="tight")
 plt.show()
 
 

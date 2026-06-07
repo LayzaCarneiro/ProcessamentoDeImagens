@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import os
 
 # ==================================================
-# QUESTÃO 4 - Descritores de Imagem
+# QUESTÃO 2 - Descritores de Imagem
 # ==================================================
 
 # -------------------------
@@ -146,7 +146,7 @@ def extrair_descritores(img_gray):
 # -------------------------
 print("Carregando imagens...")
 img1 = cv2.imread("fotos/aurora_boreal.png")
-img2 = cv2.imread("fotos/gato4.jpg")
+img2 = cv2.imread("fotos/macaco.png")
 
 if img1 is None or img2 is None:
     print("Erro ao carregar imagens")
@@ -161,7 +161,7 @@ print("Imagens carregadas!")
 # 9. Criar pastas
 # -------------------------
 os.makedirs("resultados", exist_ok=True)
-os.makedirs("resultados/q4", exist_ok=True)
+os.makedirs("resultados/q2", exist_ok=True)
 
 
 # -------------------------
@@ -192,8 +192,8 @@ for chave, valor in descritores2.items():
 # -------------------------
 # 12. Salvar imagens
 # -------------------------
-cv2.imwrite("resultados/q4/imagem1_gray.png", gray1)
-cv2.imwrite("resultados/q4/imagem2_gray.png", gray2)
+cv2.imwrite("resultados/q2/imagem1_gray.png", gray1)
+cv2.imwrite("resultados/q2/imagem2_gray.png", gray2)
 
 
 # -------------------------
@@ -239,7 +239,7 @@ plt.legend()
 plt.tight_layout()
 
 plt.savefig(
-    "resultados/q4/comparacao_descritores.png",
+    "resultados/q2/comparacao_descritores.png",
     dpi=300,
     bbox_inches="tight"
 )
@@ -250,7 +250,7 @@ plt.show()
 # -------------------------
 # 14. Salvar relatório txt
 # -------------------------
-arquivo = open("resultados/q4/descritores.txt", "w")
+arquivo = open("resultados/q2/descritores.txt", "w")
 
 arquivo.write("DESCRITORES - IMAGEM 1\n")
 arquivo.write("========================\n")
@@ -268,4 +268,4 @@ for chave, valor in descritores2.items():
 
 arquivo.close()
 
-print("\nResultados salvos em resultados/q4")
+print("\nResultados salvos em resultados/q2")

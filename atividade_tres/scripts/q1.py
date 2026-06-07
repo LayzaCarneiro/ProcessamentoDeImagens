@@ -5,12 +5,12 @@ import math
 import os
 
 # ==================================================
-# QUESTÃO 3 - Compressão de Imagem com DCT (JPEG)
+# QUESTÃO 1 - Compressão de Imagem com DCT (JPEG)
 # ==================================================
 
 # Tamanho dos blocos usados na DCT/IDCT
 # Ajuste para 8, 16, 32, etc.
-BLOCK_SIZE = 64
+BLOCK_SIZE = 8
 
 # -------------------------
 # 1. Converter para cinza
@@ -137,7 +137,7 @@ MATRIZ_Q_AJUSTADA = obter_matriz_q(BLOCK_SIZE)
 # 7. Carregar imagem
 # -------------------------
 print("Carregando imagem...")
-img = cv2.imread("fotos/muier.png")
+img = cv2.imread("fotos/roma.png")
 
 if img is None:
     print("Erro ao carregar imagem")
@@ -152,7 +152,7 @@ print("Imagem carregada!")
 # 8. Criar pastas
 # -------------------------
 os.makedirs("resultados", exist_ok=True)
-os.makedirs(f"resultados/q3_{BLOCK_SIZE}x{BLOCK_SIZE}", exist_ok=True)
+os.makedirs(f"resultados/q1_{BLOCK_SIZE}x{BLOCK_SIZE}", exist_ok=True)
 
 
 # -------------------------
@@ -192,11 +192,11 @@ imagem_reconstruida = np.clip(img_reconstruida, 0, 255).astype(np.uint8)
 # -------------------------
 # 11. Salvar imagens
 # -------------------------
-cv2.imwrite(f"resultados/q3_{BLOCK_SIZE}x{BLOCK_SIZE}/original_cinza.png", gray)
-cv2.imwrite(f"resultados/q3_{BLOCK_SIZE}x{BLOCK_SIZE}/imagem_reconstruida.png", imagem_reconstruida)
+cv2.imwrite(f"resultados/q1_{BLOCK_SIZE}x{BLOCK_SIZE}/original_cinza.png", gray)
+cv2.imwrite(f"resultados/q1_{BLOCK_SIZE}x{BLOCK_SIZE}/imagem_reconstruida.png", imagem_reconstruida)
 
 diferenca = cv2.absdiff(gray, imagem_reconstruida)
-cv2.imwrite(f"resultados/q3_{BLOCK_SIZE}x{BLOCK_SIZE}/diferenca.png", diferenca)
+cv2.imwrite(f"resultados/q1_{BLOCK_SIZE}x{BLOCK_SIZE}/diferenca.png", diferenca)
 
 
 # -------------------------
@@ -224,7 +224,7 @@ plt.axis("off")
 
 plt.tight_layout()
 
-plt.savefig(f"resultados/q3_{BLOCK_SIZE}x{BLOCK_SIZE}/resultado_geral_q3.png", dpi=300, bbox_inches="tight")
-plt.savefig("resultados/resultado_q3.png", dpi=300, bbox_inches="tight")
-print("\nResultados salvos em resultados/q3")
+plt.savefig(f"resultados/q1_{BLOCK_SIZE}x{BLOCK_SIZE}/resultado_geral_q1.png", dpi=300, bbox_inches="tight")
+plt.savefig("resultados/resultado_q1.png", dpi=300, bbox_inches="tight")
+print("\nResultados salvos em resultados/q1")
 plt.show()

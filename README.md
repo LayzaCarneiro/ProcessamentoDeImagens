@@ -53,6 +53,26 @@ Resultados:
 
 ---
 
+# Atividade 3: Compressão, Representação e Descrição de Imagens
+
+A terceira atividade teve como foco a representação compacta e a caracterização quantitativa de imagens digitais:
+
+* aplicação de transformações para representação da informação em diferentes domínios
+* análise de técnicas de compressão e redução de redundância
+* extração de descritores estatísticos globais
+* cálculo de medidas como média, variância e energia
+* obtenção de descritores baseados em diferenças horizontais e verticais
+* comparação quantitativa entre diferentes imagens por meio dos descritores extraídos
+
+Resultados:
+
+* representação mais compacta dos dados visuais por meio de transformações apropriadas
+* análise do impacto da compressão na preservação das informações da imagem
+* caracterização numérica das imagens através de descritores estatísticos
+* comparação objetiva entre imagens utilizando medidas extraídas automaticamente
+  
+---
+
 # Estrutura do Projeto
 
 ```text
@@ -68,7 +88,7 @@ Resultados:
 │   ├── resultados/       # Resultados gerados pela atividade 3
 │   ├── scripts/          # Códigos das questões da atividade 3
 │   ├── Atividade3PI.pdf 
-│   └── relatorio_atividade_dois_pi.pdf
+│   └── relatorio_atividade_tres_pi.pdf
 ├── atividade_um/
 │   ├── fotos/           # Imagens de entrada da atividade 1
 │   ├── resultados/      # Resultados gerados pela atividade 1
@@ -142,3 +162,19 @@ Cada atividade entrega resultados visuais e arquivos de saída que ilustram o ef
 | 2 | <img src="https://github.com/user-attachments/assets/5aaa9325-dee0-4134-bc3a-b8d2791d85dc" width="700"/> |
 
 ### Preview dos Resultados da Atividade 3
+#### Questão 1 — Representação por Blocos
+
+| Tamanho do Bloco | Resultado |
+|------------------|-----------|
+| 2×2 | <img src="https://github.com/user-attachments/assets/a72340f1-dd04-43e5-a530-1e38dd8d7516" width="700"/> |
+| 8×8 | <img src="https://github.com/user-attachments/assets/f44886c7-d3bc-42ad-8841-e849322d2bc0" width="700"/> |
+| 16×16 | <img src="https://github.com/user-attachments/assets/e4d6e529-9146-4876-9338-6a5895fb545e" width="700"/> |
+| 64×64 | <img src="https://github.com/user-attachments/assets/3bfb3da4-f4dc-4e2e-a144-90779948a32c" width="700"/> |
+
+#### Questão 2 — Descritores de Imagens
+
+| Resultado | Imagem |
+|------------|--------|
+| Imagem 1 | <img src="https://github.com/user-attachments/assets/d6fc4007-0fb5-41e0-8f14-27f375fe1bd8" width="400"/> |
+| Imagem 2 | <img src="https://github.com/user-attachments/assets/7651a338-a269-45ff-b694-ee25ffacdc37" width="400"/> |
+| Comparação dos Descritores | <img src="https://github.com/user-attachments/assets/2a65da30-c899-472d-8718-2850fa3940de" width="500"/> |

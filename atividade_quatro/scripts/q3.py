@@ -1,23 +1,23 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-import heapq
 import os
 
 # =========================================================================
-# QUESTÃO 3 - PIPELINE COMPLETO REPLICANDO O GRID DE REFERÊNCIA (100% MANUAL)
+# QUESTÃO 3 - PIPELINE COMPLETO BASEADO NAS FUNÇÕES REPASSADAS PELO ALUNO
 # =========================================================================
 
-# --- OPERAÇÕES MORFOLÓGICAS MANUAIS (ELEMENTO ESTRUTURANTE 3x3 QUADRADO) ---
+# --- OPERAÇÕES MORFOLÓGICAS ADAPTADAS COM ELEMENTO ESTRUTURANTE 3x3 ---
+
 def dilatar_manual(img, iteracoes=1):
     h, w = img.shape
     saida = img.copy()
     for _ in range(iteracoes):
         temp = saida.copy()
-        for y in range(1, h - 1):
-            for x in range(1, w - 1):
-                if temp[y, x] == 255:
-                    saida[y-1:y+2, x-1:x+2] = 255
+        for r in range(1, h - 1):
+            for c in range(1, w - 1):
+                if temp[r, c] == 255:
+                    saida[r-1:r+2, c-1:c+2] = 255
     return saida
 
 def eroder_manual(img, iteracoes=1):
@@ -25,225 +25,252 @@ def eroder_manual(img, iteracoes=1):
     saida = img.copy()
     for _ in range(iteracoes):
         temp = saida.copy()
-        for y in range(1, h - 1):
-            for x in range(1, w - 1):
-                if temp[y, x] == 0:
-                    saida[y-1:y+2, x-1:x+2] = 0
+        for r in range(1, h - 1):
+            for c in range(1, w - 1):
+                if temp[r, c] == 0:
+                    saida[r-1:r+2, c-1:c+2] = 0
     return saida
 
-def abertura_manual(img, iteracoes=2):
+def opening(binary_img, kernel_size=3):
     # Abertura = Erosão seguida de Dilatação
-    return dilatar_manual(eroder_manual(img, iteracoes), iteracoes)
+    return dilatar_manual(eroder_manual(binary_img, 1), 1)
 
-def fechamento_manual(img, iteracoes=2):
+def closing(binary_img, kernel_size=3):
     # Fechamento = Dilatação seguida de Erosão
-    return eroder_manual(dilatar_manual(img, iteracoes), iteracoes)
+    return eroder_manual(dilatar_manual(binary_img, 1), 1)
 
+# --- FUNÇÕES EXPLICITAS DA SUA NOVA BASE ---
 
-# --- TRANSFORMADA DE DISTÂNCIA MANUAL (ALGORITMO CHAMPION TWO-PASS COSSENO/EUCLIDIANO APPROX) ---
-def transformada_distancia_manual(img_binaria):
-    h, w = img_binaria.shape
-    dist = np.full((h, w), 999999.0, dtype=np.float32)
-    dist[img_binaria == 0] = 0.0
+def distance_transform(binary_img):
+    h, w = binary_img.shape
+    dist = np.where(binary_img == 0, 0, np.inf)
     
-    # Passo 1: Passada progressiva (cima para baixo, esquerda para direita)
-    for y in range(1, h):
-        for x in range(1, w):
-            if img_binaria[y, x] == 255:
-                dist[y, x] = min(dist[y, x],
-                                 dist[y-1, x] + 1.0, 
-                                 dist[y, x-1] + 1.0,
-                                 dist[y-1, x-1] + 1.414)
+    for r in range(h):
+        for c in range(w):
+            if dist[r, c] > 0:
+                top = dist[r - 1, c] + 1 if r > 0 else np.inf
+                left = dist[r, c - 1] + 1 if c > 0 else np.inf
+                dist[r, c] = min(dist[r, c], top, left)
                 
-    # Passo 2: Passada regressiva (baixo para cima, direita para esquerda)
-    for y in range(h - 2, -1, -1):
-        for x in range(w - 2, -1, -1):
-            if img_binaria[y, x] == 255:
-                dist[y, x] = min(dist[y, x],
-                                 dist[y+1, x] + 1.0, 
-                                 dist[y, x+1] + 1.0,
-                                 dist[y+1, x+1] + 1.414)
+    for r in range(h - 1, -1, -1):
+        for c in range(w - 1, -1, -1):
+            if dist[r, c] > 0:
+                bottom = dist[r + 1, c] + 1 if r < h - 1 else np.inf
+                right = dist[r, c + 1] + 1 if c < w - 1 else np.inf
+                dist[r, c] = min(dist[r, c], bottom, right)
+                
     return dist
 
+def preprocess_morphology_and_distance(binary_img, kernel):
+    cleaned_bin = opening(binary_img, kernel) 
+    dist_map = distance_transform(cleaned_bin)
+    return cleaned_bin, dist_map
 
-# --- DETECÇÃO DE COMPONENTES CONECTADOS MANUAL PARA MARCADORES (Rotulação por FloodFill) ---
-def connected_components_manual(img_sure_fg):
-    h, w = img_sure_fg.shape
-    marcadores = np.zeros((h, w), dtype=np.int32)
-    id_atual = 1
+def _bfs(r, c, peaks, markers, visited, label, h, w):
+    queue = [(r, c)]
+    visited[r, c] = True
     
-    # Varre a imagem procurando pixels de primeiro plano não rotulados
-    for y in range(1, h - 1):
-        for x in range(1, w - 1):
-            if img_sure_fg[y, x] == 255 and marcadores[y, x] == 0:
-                # Inicia um Flood Fill manual usando uma fila simples
-                fila = [(y, x)]
-                marcadores[y, x] = id_atual
-                
-                while fila:
-                    cy, cx = fila.pop(0)
-                    for dy, dx in [(-1,0), (1,0), (0,-1), (0,1)]:
-                        ny, nx = cy + dy, cx + dx
-                        if img_sure_fg[ny, nx] == 255 and marcadores[ny, nx] == 0:
-                            marcadores[ny, nx] = id_atual
-                            fila.append((ny, nx))
-                id_atual += 1
-                
-    return marcadores, id_atual - 1
-
-
-# --- CRESCIMENTO WATERSHED SIMPLIFICADO BASEADO EM FILA DE PRIORIDADES ---
-def watershed_manual(imagem_gradiente, marcadores_iniciais, img_closing):
-    h, w = imagem_gradiente.shape
-    rotulos = marcadores_iniciais.copy()
-    fila_prioridade = []
-    
-    # Insere as bordas dos marcadores na fila de prioridades
-    for y in range(1, h - 1):
-        for x in range(1, w - 1):
-            if rotulos[y, x] > 0:
-                for dy, dx in [(-1,0), (1,0), (0,-1), (0,1)]:
-                    ny, nx = y + dy, x + dx
-                    if rotulos[ny, nx] == 0 and img_closing[ny, nx] == 255:
-                        heapq.heappush(fila_prioridade, (imagem_gradiente[ny, nx], ny, nx, rotulo[y, x]))
-
-    while fila_prioridade:
-        val, y, x, rotulo_origem = heapq.heappop(fila_prioridade)
+    while queue:
+        curr_r, curr_c = queue.pop(0)
+        markers[curr_r, curr_c] = label
         
-        if rotulos[y, x] != 0:
-            continue
+        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            nr, nc = curr_r + dr, curr_c + dc
             
-        borda_detectada = False
-        for dy, dx in [(-1,0), (1,0), (0,-1), (0,1)]:
-            ny, nx = y + dy, x + dx
-            if 0 <= ny < h and 0 <= nx < w:
-                if rotulos[ny, nx] > 0 and rotulos[ny, nx] != rotulo_origem:
-                    borda_detectada = True
-                    break
+            if 0 <= nr < h and 0 <= nc < w:
+                if peaks[nr, nc] == 255 and not visited[nr, nc]:
+                    visited[nr, nc] = True
+                    queue.append((nr, nc))
+
+def extract_and_label_markers(dist_map, threshold):
+    h, w = dist_map.shape
+    max_dist = np.max(dist_map)
+    
+    if max_dist == 0:
+        return np.zeros((h, w), dtype=np.int32)
+        
+    peaks = np.where(dist_map > (max_dist * threshold), 255, 0).astype(np.uint8)
+    
+    markers = np.zeros((h, w), dtype=np.int32)
+    visited = np.zeros((h, w), dtype=bool)
+    label = 1
+    
+    for r in range(h):
+        for c in range(w):
+            if peaks[r, c] == 255 and not visited[r, c]:
+                _bfs(r, c, peaks, markers, visited, label, h, w)
+                label += 1
+                
+    return markers
+
+def watershed(dist_map, markers):
+    h, w = dist_map.shape
+    labels = markers.copy()
+    
+    topo_surface = (np.max(dist_map) - dist_map).astype(np.int32)
+    
+    init_r, init_c = np.where(labels > 0)
+    boundary_pixels = []
+    in_queue = np.zeros((h, w), dtype=bool)
+    
+    for r, c in zip(init_r, init_c):
+        in_queue[r, c] = True
+        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            nr, nc = r + dr, c + dc
+            if 0 <= nr < h and 0 <= nc < w:
+                if labels[nr, nc] == 0 and not in_queue[nr, nc]:
+                    in_queue[nr, nc] = True
+                    boundary_pixels.append((topo_surface[nr, nc], nr, nc))
+    
+    boundary_pixels.sort(key=lambda x: x[0])
+    
+    while boundary_pixels:
+        _, curr_r, curr_c = boundary_pixels.pop(0)
+        
+        neighbor_labels = []
+        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            nr, nc = curr_r + dr, curr_c + dc
+            if 0 <= nr < h and 0 <= nc < w and labels[nr, nc] > 0:
+                neighbor_labels.append(labels[nr, nc])
+                
+        if neighbor_labels:
+            unique_labels = np.unique(neighbor_labels)
+            if len(unique_labels) == 1:
+                labels[curr_r, curr_c] = unique_labels[0]
+            else:
+                labels[curr_r, curr_c] = -1 
+                
+        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            nr, nc = curr_r + dr, curr_c + dc
+            if 0 <= nr < h and 0 <= nc < w:
+                if labels[nr, nc] == 0 and not in_queue[nr, nc]:
+                    in_queue[nr, nc] = True
+                    item = (topo_surface[nr, nc], nr, nc)
                     
-        if borda_detectada:
-            rotulos[y, x] = -1 # Linha do divisor de águas
-        else:
-            rotulos[y, x] = rotulo_origem
-            for dy, dx in [(-1,0), (1,0), (0,-1), (0,1)]:
-                ny, nx = y + dy, x + dx
-                if 0 <= ny < h and 0 <= nx < w:
-                    if rotulos[ny, nx] == 0 and img_closing[ny, nx] == 255:
-                        heapq.heappush(fila_prioridade, (imagem_gradiente[ny, nx], ny, nx, rotulo_origem))
-                        
-    return rotulos
+                    idx = 0
+                    while idx < len(boundary_pixels) and boundary_pixels[idx][0] < item[0]:
+                        idx += 1
+                    boundary_pixels.insert(idx, item)
+                    
+    return labels
+
+def generate_label_color_image(labels):
+    h, w = labels.shape
+    color_img = np.zeros((h, w, 3), dtype=np.uint8)
+    
+    np.random.seed(42)
+    max_label = np.max(labels)
+    
+    colors = {0: [0, 0, 0], -1: [0, 0, 255]}  # -1 mapeado para Vermelho BGR
+    for i in range(1, max_label + 1):
+        colors[i] = list(np.random.randint(40, 240, size=3))
+        
+    for r in range(h):
+        for c in range(w):
+            lbl = labels[r, c]
+            if lbl in colors:
+                color_img[r, c] = colors[lbl]
+            else:
+                color_img[r, c] = [255, 255, 255]
+                
+    return color_img
+
+def watershed_pipeline(binary_img, kernel_size, threshold_ratio):
+    cleaned_bin, dist_map = preprocess_morphology_and_distance(binary_img, kernel_size)
+    markers = extract_and_label_markers(dist_map, threshold_ratio)
+    labels = watershed(dist_map, markers)
+    colored_output = generate_label_color_image(labels)
+    
+    return cleaned_bin, dist_map, markers, labels, colored_output
 
 
 # =========================================================================
-# EXECUÇÃO DO PIPELINE
+# CONFIGURAÇÃO E MONTAGEM DO GRID DE PRODUTOS INTERMEDIÁRIOS
 # =========================================================================
 
 pasta_saida = "resultados_watershed_final"
 os.makedirs(pasta_saida, exist_ok=True)
 
 # 0. Carregar imagem original
-img_bgr = cv2.imread('fotos/naranjas.png')
+img_bgr = cv2.imread('fotos/gatos.png')
 if img_bgr is None:
-    print("Erro: Verifique se sua imagem está em 'fotos/muedas.png'")
+    print("Erro: Verifique se sua imagem está em 'fotos'")
     exit()
 
-# Conversão manual para cinza por luminância
 gray = (0.114 * img_bgr[:,:,0] + 0.587 * img_bgr[:,:,1] + 0.299 * img_bgr[:,:,2]).astype(np.uint8)
 
-# 1. Threshold (Convertido em THRESH_BINARY_INV manual)
-# Usando um limiar ajustado padrão para separar as moedas do fundo claro
+# 1. Threshold
 img_threshold = np.zeros_like(gray)
-img_threshold[gray < 130] = 255  # Moedas ficam brancas (Invertido)
+img_threshold[gray < 130] = 255 
 
-# 2. Closing (Passando a abertura antes para tirar ruídos e o fechamento para consolidar os corpos)
-img_opening = abertura_manual(img_threshold, iteracoes=1)
-img_closing = fechamento_manual(img_opening, iteracoes=2)
+# 2. Closing de pré-processamento conforme sua rotina estrutural
+img_closed = closing(img_threshold, kernel_size=5)
 
-# 3. Distance Transform
-mapa_distancia = transformada_distancia_manual(img_closing)
-# Normalização para exibição visual [0, 255]
-img_distance_transform = np.zeros_like(gray)
-if np.max(mapa_distancia) > 0:
-    img_distance_transform = ((mapa_distancia / np.max(mapa_distancia)) * 255).astype(np.uint8)
+# Execução do seu pipeline unificado
+kernel_param = 5
+threshold_param = 0.4
+cleaned_bin, dist_map, markers, labels, colored_output = watershed_pipeline(
+    img_closed, 
+    kernel_size=kernel_param, 
+    threshold_ratio=threshold_param
+)
 
-# 4. Local Maximum
-# Extrai as cristas de distância mais altas de cada moeda (Cores brancas puras isoladas)
+# Engenharia de normalização visual para exibição uniforme
+dist_norm = ((dist_map - np.min(dist_map)) / (np.max(dist_map) - np.min(dist_map)) * 255).astype(np.uint8)
+markers_norm = np.where(markers > 0, 255, 0).astype(np.uint8)
+
+# Gerando o "Local Maximum" isolado a partir do threshold multiplicador direto
 img_local_maximum = np.zeros_like(gray)
-img_local_maximum[mapa_distancia > (0.45 * np.max(mapa_distancia))] = 255
+img_local_maximum[dist_map > (np.max(dist_map) * threshold_param)] = 255
 
-# 5. Markers (Rótulos numéricos únicos + borda Unknown limpa em fundo preto)
-mapa_sure_fg = img_local_maximum.copy()
-marcadores, num_objetos = connected_components_manual(mapa_sure_fg)
-
-# Incrementa marcadores para o fundo ser 1 (Crescimento correto)
-marcadores_ajustados = marcadores + 1
-img_sure_bg = dilatar_manual(img_closing, iteracoes=3)
-unknown = img_sure_bg - img_closing
-marcadores_ajustados[unknown == 255] = 0
-
-# Imagem visual dos marcadores (escala cinza mapeada para o relatório)
-img_markers_visual = (marcadores * (230 // (num_objetos + 1))).astype(np.uint8)
-
-# Execução do algoritmo Watershed sobre o relevo inverso da distância
-relevo = np.max(mapa_distancia) - mapa_distancia
-resultado_rotulos = watershed_manual(relevo, marcadores_ajustados, img_closing)
-
-# 6. Segmented - Gray
+# Criando "Segmented - Gray" baseado nos labels numéricos estáveis
+max_lbl = np.max(labels)
 img_segmented_gray = np.zeros_like(gray)
-for i in range(1, num_objetos + 2):
-    tom = int(i * (255 / (num_objetos + 2)))
-    img_segmented_gray[resultado_rotulos == i] = tom
+for i in range(1, max_lbl + 1):
+    tom = int(i * (230 / (max_lbl + 1)))
+    img_segmented_gray[labels == i] = tom
+img_segmented_gray[labels == -1] = 255  # Borda divisória branca
 
-# 7. Segmented - Color
-np.random.seed(25) # Garante cores bonitas e bem distribuídas
-paleta_cores = np.random.randint(40, 240, size=(num_objetos + 2, 3), dtype=np.uint8)
-paleta_cores[1] = [30, 30, 30] # Fundo cinza escuro para manter o padrão das laranjas
-
-img_segmented_color = np.zeros_like(img_bgr)
-h, w = resultado_rotulos.shape
-for y in range(h):
-    for x in range(w):
-        rot = resultado_rotulos[y, x]
-        if rot > 0:
-            img_segmented_color[y, x] = paleta_cores[rot]
-        elif rot == -1:
-            img_segmented_color[y, x] = [0, 0, 0] # Borda preta de separação na colorida
-
-# 8. Output Image (Original com linhas de divisão em Vermelho)
+# Criando a imagem final do Output (Original com linhas divisórias em vermelho engrossadas)
 img_output = img_bgr.copy()
-img_output[resultado_rotulos == -1] = [0, 0, 255] # Linhas vermelhas puras
+# Engrossamento simples das bordas para correta amostragem visual no grid
+borda_mask = np.zeros_like(gray)
+borda_mask[labels == -1] = 255
+borda_mask_grossa = dilatar_manual(borda_mask, iteracoes=1)
+img_output[borda_mask_grossa == 255] = [0, 0, 255]  # Vermelho Puro BGR
+
+# Aplica contorno no Segmented - Color original
+img_segmented_color_rgb = cv2.cvtColor(colored_output, cv2.COLOR_BGR2RGB)
+img_segmented_color_rgb[borda_mask_grossa == 255] = [255, 255, 255]
 
 
 # =========================================================================
-# RENDERIZAÇÃO DO MOSAICO 3x3 PERFEITO (IGUAL AO ENUNCIADO)
+# EXIBIÇÃO EM GRID 3x3 EXATAMENTE COMO SOLICITADO NO ENUNCIADO
 # =========================================================================
 fig, axs = plt.subplots(3, 3, figsize=(15, 13))
 
-# Converte BGR para RGB apenas para a amostragem correta do Matplotlib
 img_rgb_original = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
 img_rgb_output = cv2.cvtColor(img_output, cv2.COLOR_BGR2RGB)
-img_rgb_segmented_color = cv2.cvtColor(img_segmented_color, cv2.COLOR_BGR2RGB)
 
 # Linha 1
 axs[0, 0].imshow(img_rgb_original); axs[0, 0].set_title("Original image", fontsize=14, weight='bold'); axs[0, 0].axis("off")
 axs[0, 1].imshow(img_threshold, cmap='gray'); axs[0, 1].set_title("Threshold", fontsize=14, weight='bold'); axs[0, 1].axis("off")
-axs[0, 2].imshow(img_closing, cmap='gray'); axs[0, 2].set_title("Closing", fontsize=14, weight='bold'); axs[0, 2].axis("off")
+axs[0, 2].imshow(img_closed, cmap='gray'); axs[0, 2].set_title("Closing", fontsize=14, weight='bold'); axs[0, 2].axis("off")
 
 # Linha 2
-axs[1, 0].imshow(img_distance_transform, cmap='gray'); axs[1, 0].set_title("Distance transform", fontsize=14, weight='bold'); axs[1, 0].axis("off")
+axs[1, 0].imshow(dist_norm, cmap='gray'); axs[1, 0].set_title("Distance transform", fontsize=14, weight='bold'); axs[1, 0].axis("off")
 axs[1, 1].imshow(img_local_maximum, cmap='gray'); axs[1, 1].set_title("Local maximum", fontsize=14, weight='bold'); axs[1, 1].axis("off")
-axs[1, 2].imshow(img_markers_visual, cmap='gray'); axs[1, 2].set_title("Markers", fontsize=14, weight='bold'); axs[1, 2].axis("off")
+axs[1, 2].imshow(markers_norm, cmap='gray'); axs[1, 2].set_title("Markers", fontsize=14, weight='bold'); axs[1, 2].axis("off")
 
 # Linha 3
 axs[2, 0].imshow(img_segmented_gray, cmap='gray'); axs[2, 0].set_title("Segmented - gray", fontsize=14, weight='bold'); axs[2, 0].axis("off")
-axs[2, 1].imshow(img_rgb_segmented_color); axs[2, 1].set_title("Segmented - color", fontsize=14, weight='bold'); axs[2, 1].axis("off")
+axs[2, 1].imshow(img_segmented_color_rgb); axs[2, 1].set_title("Segmented - color", fontsize=14, weight='bold'); axs[2, 1].axis("off")
 axs[2, 2].imshow(img_rgb_output); axs[2, 2].set_title("Output image", fontsize=14, weight='bold'); axs[2, 2].axis("off")
 
 plt.tight_layout()
 
-# Salva o mosaico completo montado
-caminho_mosaico = os.path.join(pasta_saida, "mosaico_comparativo_3x3.png")
+caminho_mosaico = os.path.join(pasta_saida, "mosaico_aluno_final_3x3.png")
 plt.savefig(caminho_mosaico, dpi=300, bbox_inches='tight')
 plt.show()
 
-print(f"\n[Sucesso] Mosaico 3x3 gerado e salvo em '{caminho_mosaico}'!")
+print(f"\n[Sucesso] Pipeline atualizado com sua base. Resultado salvo em: '{caminho_mosaico}'")
